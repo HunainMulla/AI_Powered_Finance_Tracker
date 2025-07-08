@@ -19,16 +19,33 @@ import {
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 
-// Dummy user data for testing
-const dummyUser = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john@example.com',
-  createdAt: '2024-01-15T00:00:00.000Z',
-  avatar: null,
-  phone: '+1 (555) 123-4567',
+// User interface
+type UserType = {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  phone: string;
+  currency: string;
+  timezone: string;
+  avatar: string | null;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+};
+
+// Default user data structure
+const defaultUser: UserType = {
+  id: '',
+  name: '',
+  email: '',
+  createdAt: new Date().toISOString(),
+  phone: '',
   currency: 'USD',
-  timezone: 'America/New_York',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  avatar: null,
   notifications: {
     email: true,
     push: true,
@@ -37,15 +54,60 @@ const dummyUser = {
 };
 
 export default function ProfilePage() {
-  const [user, setUser] = useState(dummyUser);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<UserType>(defaultUser);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone
+    name: '',
+    email: '',
+    phone: ''
   });
   const router = useRouter();
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        // Get current user data from the backend
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await response.json();
+        setUser(prev => ({
+          ...prev,
+          ...userData,
+          createdAt: userData.createdAt || new Date().toISOString()
+        }));
+        setEditData({
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone || ''
+        });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        toast.error('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -61,10 +123,46 @@ export default function ProfilePage() {
       return;
     }
 
-    // For now, just update local state
-    setUser({ ...user, ...editData });
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/api/auth/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      const updatedUser = await response.json();
+      
+      // Update local state with the updated user data
+      setUser(prev => ({
+        ...prev,
+        ...updatedUser,
+        name: editData.name,
+        email: editData.email,
+        phone: editData.phone
+      }));
+      
+      setIsEditing(false);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -217,10 +315,22 @@ export default function ProfilePage() {
                   <div className="flex space-x-4 pt-4">
                     <button
                       onClick={handleSave}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors duration-200"
+                      disabled={isSaving}
+                      className={`bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 ${
+                        isSaving ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-700'
+                      }`}
                     >
-                      <Save className="h-4 w-4" />
-                      <span>Save Changes</span>
+                      {isSaving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Save Changes</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={handleCancel}

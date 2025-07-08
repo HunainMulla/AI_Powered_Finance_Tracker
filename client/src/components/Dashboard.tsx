@@ -4,40 +4,71 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DollarSign, TrendingUp, TrendingDown, Activity, Plus, ArrowRight, Target } from 'lucide-react';
 import Navbar from './Navbar';
+import { dashboardAPI, transactionsAPI } from '@/lib/api';
 
-// Dummy data for testing
-const dummyStats = {
-  monthlyIncome: 4000,
-  monthlyExpenses: 1250,
-  monthlyBalance: 2750,
-  totalTransactions: 8
-};
+interface DashboardStats {
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlyBalance: number;
+  totalTransactions: number;
+}
+
+interface Transaction {
+  id: string;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+  description: string;
+  date: string;
+  category: {
+    id: string;
+    name: string;
+    color: string;
+  };
+}
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(dummyStats);
-  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState<DashboardStats>({
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    monthlyBalance: 0,
+    totalTransactions: 0
+  });
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Remove authentication check for now
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (!token) {
-  //     router.push('/login');
-  //     return;
-  //   }
-  //   fetchStats();
-  // }, [router]);
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    fetchDashboardData();
+  }, [router]);
 
-  // const fetchStats = async () => {
-  //   try {
-  //     const response = await dashboardAPI.getStats();
-  //     setStats(response.data);
-  //   } catch (error) {
-  //     console.error('Failed to fetch stats:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsResponse, transactionsResponse] = await Promise.all([
+        dashboardAPI.getStats(),
+        transactionsAPI.getAll()
+      ]);
+      
+      setStats(statsResponse.data);
+      
+      // Get the 3 most recent transactions
+      const recent = transactionsResponse.data.slice(0, 3);
+      setRecentTransactions(recent);
+    } catch (error: any) {
+      console.error('Failed to fetch dashboard data:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -61,8 +92,8 @@ export default function Dashboard() {
       color: 'text-green-400',
       bgColor: 'bg-green-900/20',
       iconColor: 'text-green-400',
-      change: '+12.5%',
-      changeColor: 'text-green-400'
+      change: '',
+      changeColor: 'text-gray-400'
     },
     {
       title: 'Monthly Expenses',
@@ -71,8 +102,8 @@ export default function Dashboard() {
       color: 'text-red-400',
       bgColor: 'bg-red-900/20',
       iconColor: 'text-red-400',
-      change: '+8.2%',
-      changeColor: 'text-red-400'
+      change: '',
+      changeColor: 'text-gray-400'
     },
     {
       title: 'Monthly Balance',
@@ -81,8 +112,8 @@ export default function Dashboard() {
       color: stats?.monthlyBalance && stats.monthlyBalance >= 0 ? 'text-green-400' : 'text-red-400',
       bgColor: stats?.monthlyBalance && stats.monthlyBalance >= 0 ? 'bg-green-900/20' : 'bg-red-900/20',
       iconColor: stats?.monthlyBalance && stats.monthlyBalance >= 0 ? 'text-green-400' : 'text-red-400',
-      change: stats?.monthlyBalance && stats.monthlyBalance >= 0 ? '+4.3%' : '-2.1%',
-      changeColor: stats?.monthlyBalance && stats.monthlyBalance >= 0 ? 'text-green-400' : 'text-red-400'
+      change: '',
+      changeColor: 'text-gray-400'
     },
     {
       title: 'Total Transactions',
@@ -91,8 +122,8 @@ export default function Dashboard() {
       color: 'text-blue-400',
       bgColor: 'bg-blue-900/20',
       iconColor: 'text-blue-400',
-      change: '+15.7%',
-      changeColor: 'text-blue-400'
+      change: '',
+      changeColor: 'text-gray-400'
     }
   ];
 
@@ -126,6 +157,34 @@ export default function Dashboard() {
       color: 'bg-orange-600 hover:bg-orange-700'
     }
   ];
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getTransactionIcon = (type: string) => {
+    return type === 'INCOME' ? TrendingUp : TrendingDown;
+  };
+
+  const getTransactionColor = (type: string) => {
+    return type === 'INCOME' ? 'text-green-400' : 'text-red-400';
+  };
+
+  const getTransactionBgColor = (type: string) => {
+    return type === 'INCOME' ? 'bg-green-900/50' : 'bg-red-900/50';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
@@ -213,44 +272,43 @@ export default function Dashboard() {
           </div>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-green-900/50 rounded-full flex items-center justify-center mr-3">
-                  <TrendingUp className="h-5 w-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Salary</p>
-                  <p className="text-sm text-gray-400">Income • Today</p>
-                </div>
+            {recentTransactions.length > 0 ? (
+              recentTransactions.map((transaction) => {
+                const Icon = getTransactionIcon(transaction.type);
+                const iconColor = getTransactionColor(transaction.type);
+                const bgColor = getTransactionBgColor(transaction.type);
+                
+                return (
+                  <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 ${bgColor} rounded-full flex items-center justify-center mr-3`}>
+                        <Icon className={`h-5 w-5 ${iconColor}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">{transaction.description}</p>
+                        <p className="text-sm text-gray-400">
+                          {transaction.category?.name || 'Uncategorized'} • {formatDate(transaction.date)}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`${iconColor} font-semibold`}>
+                      {transaction.type === 'INCOME' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-400">No transactions yet</p>
+                <button
+                  onClick={() => router.push('/transactions')}
+                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Add your first transaction
+                </button>
               </div>
-              <span className="text-green-400 font-semibold">+$3,500.00</span>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-red-900/50 rounded-full flex items-center justify-center mr-3">
-                  <TrendingDown className="h-5 w-5 text-red-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Grocery Shopping</p>
-                  <p className="text-sm text-gray-400">Food • Yesterday</p>
-                </div>
-              </div>
-              <span className="text-red-400 font-semibold">-$85.50</span>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-blue-900/50 rounded-full flex items-center justify-center mr-3">
-                  <DollarSign className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Gas Station</p>
-                  <p className="text-sm text-gray-400">Transportation • 2 days ago</p>
-                </div>
-              </div>
-              <span className="text-red-400 font-semibold">-$45.00</span>
-            </div>
+            )}
           </div>
         </div>
       </main>

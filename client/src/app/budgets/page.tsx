@@ -2,83 +2,71 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, PieChart, Calendar, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, PieChart, Calendar, DollarSign, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
+import { budgetsAPI, Budget } from '@/lib/api';
 
-// Dummy budgets data for testing
-const dummyBudgets = [
-  {
-    id: '1',
-    name: 'Monthly Groceries',
-    amount: 500,
-    spent: 385.50,
-    period: 'MONTHLY',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '2',
-    name: 'Entertainment',
-    amount: 200,
-    spent: 150,
-    period: 'MONTHLY',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '3',
-    name: 'Transportation',
-    amount: 300,
-    spent: 245,
-    period: 'MONTHLY',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '4',
-    name: 'Shopping',
-    amount: 400,
-    spent: 520,
-    period: 'MONTHLY',
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  }
-];
+type BudgetWithSpent = Budget & {
+  spent: number;
+  remaining: number;
+  progress: number;
+  isOverBudget: boolean;
+};
 
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = useState(dummyBudgets);
-  const [loading, setLoading] = useState(false);
+  const [budgets, setBudgets] = useState<BudgetWithSpent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
-    period: 'MONTHLY' as 'MONTHLY' | 'WEEKLY' | 'YEARLY',
-    startDate: '',
-    endDate: ''
+    period: 'MONTHLY' as 'MONTHLY' | 'YEARLY' | 'CUSTOM',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
   const router = useRouter();
 
-  // Remove authentication check for now
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (!token) {
-  //     router.push('/login');
-  //     return;
-  //   }
-  //   fetchBudgets();
-  // }, [router]);
+  // Fetch budgets from the API
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
 
-  // const fetchBudgets = async () => {
-  //   try {
-  //     const response = await budgetsAPI.getAll();
-  //     setBudgets(response.data);
-  //   } catch (error) {
-  //     console.error('Failed to fetch budgets:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await budgetsAPI.getAll();
+        
+        // Transform the budgets to include calculated fields
+        const budgetsWithCalculations = response.data.map((budget: Budget) => ({
+          ...budget,
+          spent: 0, // This should come from the backend in a real app
+          remaining: budget.amount - 0, // This should come from the backend
+          progress: 0, // This should be calculated
+          isOverBudget: false // This should be calculated
+        }));
+        
+        setBudgets(budgetsWithCalculations);
+      } catch (err: any) {
+        console.error('Failed to fetch budgets:', err);
+        setError('Failed to load budgets. Please try again.');
+        
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBudgets();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,16 +75,24 @@ export default function BudgetsPage() {
       return;
     }
 
-    // For now, just add to local state
-    const newBudget = {
-      id: Date.now().toString(),
-      name: formData.name,
-      amount: parseFloat(formData.amount),
-      spent: 0,
-      period: formData.period,
-      startDate: formData.startDate,
-      endDate: formData.endDate
-    };
+    try {
+      setLoading(true);
+      const response = await budgetsAPI.create({
+        name: formData.name,
+        amount: parseFloat(formData.amount),
+        period: formData.period,
+        startDate: formData.startDate,
+        endDate: formData.endDate
+      });
+      
+      // Add the new budget to the list with calculated fields
+      const newBudget: BudgetWithSpent = {
+        ...response.data,
+        spent: 0, // This should come from the backend
+        remaining: response.data.amount - 0, // Calculate remaining
+        progress: 0, // Calculate progress
+        isOverBudget: false // Determine if over budget
+      };
     
     setBudgets([...budgets, newBudget]);
     toast.success('Budget created successfully!');

@@ -2,87 +2,97 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Calendar, DollarSign, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
+import { transactionsAPI } from '@/lib/api';
 
-// Dummy transaction data for testing
-const dummyTransactions = [
-  {
-    id: '1',
-    amount: 3500,
-    type: 'INCOME' as const,
-    description: 'Monthly Salary',
-    date: new Date().toISOString(),
-    category: { name: 'Salary', color: '#10B981' }
-  },
-  {
-    id: '2',
-    amount: 500,
-    type: 'INCOME' as const,
-    description: 'Freelance Project',
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    category: { name: 'Freelance', color: '#3B82F6' }
-  },
-  {
-    id: '3',
-    amount: 85.50,
-    type: 'EXPENSE' as const,
-    description: 'Grocery Shopping',
-    date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    category: { name: 'Food & Dining', color: '#F59E0B' }
-  },
-  {
-    id: '4',
-    amount: 45.00,
-    type: 'EXPENSE' as const,
-    description: 'Gas Station',
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    category: { name: 'Transportation', color: '#EF4444' }
-  },
-  {
-    id: '5',
-    amount: 120.00,
-    type: 'EXPENSE' as const,
-    description: 'New Shoes',
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    category: { name: 'Shopping', color: '#8B5CF6' }
-  }
-];
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+  type: 'INCOME' | 'EXPENSE';
+}
+
+interface Transaction {
+  id: string;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+  description: string;
+  date: string;
+  category: Category;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState(dummyTransactions);
-  const [loading, setLoading] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const router = useRouter();
 
-  // Remove authentication check for now
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (!token) {
-  //     router.push('/login');
-  //     return;
-  //   }
-  //   fetchTransactions();
-  // }, [router]);
+  // Fetch transactions from the API
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
 
-  // const fetchTransactions = async () => {
-  //   try {
-  //     const response = await transactionsAPI.getAll();
-  //     setTransactions(response.data);
-  //   } catch (error) {
-  //     console.error('Failed to fetch transactions:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await transactionsAPI.getAll();
+        
+        // Transform the transactions to match our UI needs
+        const formattedTransactions = response.data.map((txn: any) => ({
+          ...txn,
+          // If category is not populated, use a default
+          category: txn.category || { 
+            id: 'uncategorized',
+            name: 'Uncategorized', 
+            color: '#9CA3AF',
+            type: txn.type
+          }
+        }));
+        
+        setTransactions(formattedTransactions);
+      } catch (err: any) {
+        console.error('Failed to fetch transactions:', err);
+        setError('Failed to load transactions. Please try again.');
+        
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [router]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this transaction?')) return;
-    
-    // For now, just remove from local state
-    setTransactions(transactions.filter(t => t.id !== id));
-    toast.success('Transaction deleted successfully!');
+    if (!confirm('Are you sure you want to delete this transaction?')) {
+      return;
+    }
+
+    try {
+      await transactionsAPI.delete(id);
+      setTransactions(transactions.filter(transaction => transaction.id !== id));
+      toast.success('Transaction deleted successfully!');
+    } catch (err: any) {
+      console.error('Failed to delete transaction:', err);
+      toast.error('Failed to delete transaction. Please try again.');
+      
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -93,19 +103,32 @@ export default function TransactionsPage() {
     });
   };
 
-  if (showForm) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <Navbar />
-        <div className="max-w-md mx-auto py-12">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Add Transaction</h2>
-            <p className="text-gray-600 mb-4">Form functionality will be available when backend is connected.</p>
-            <button
-              onClick={() => setShowForm(false)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+        <div className="flex justify-center items-center h-screen">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
+            <p className="text-gray-300 text-lg">Loading transactions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+        <Navbar />
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="bg-red-900/30 border border-red-700 text-red-400 px-4 py-3 rounded-lg mb-6">
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
-              Back to Transactions
+              Retry
             </button>
           </div>
         </div>
@@ -113,14 +136,32 @@ export default function TransactionsPage() {
     );
   }
 
-  if (loading) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading transactions...</p>
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  {error}
+                </p>
+                <div className="mt-4">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

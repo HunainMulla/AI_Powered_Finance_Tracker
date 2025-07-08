@@ -2,25 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Tag, Palette } from 'lucide-react';
+import { Plus, Tag, Palette, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
+import { categoriesAPI } from '@/lib/api';
 
-// Dummy categories data for testing
-const dummyCategories = [
-  { id: '1', name: 'Salary', color: '#10B981', type: 'INCOME' as const },
-  { id: '2', name: 'Freelance', color: '#3B82F6', type: 'INCOME' as const },
-  { id: '3', name: 'Food & Dining', color: '#F59E0B', type: 'EXPENSE' as const },
-  { id: '4', name: 'Transportation', color: '#EF4444', type: 'EXPENSE' as const },
-  { id: '5', name: 'Shopping', color: '#8B5CF6', type: 'EXPENSE' as const },
-  { id: '6', name: 'Entertainment', color: '#EC4899', type: 'EXPENSE' as const },
-  { id: '7', name: 'Utilities', color: '#6B7280', type: 'EXPENSE' as const },
-  { id: '8', name: 'Healthcare', color: '#059669', type: 'EXPENSE' as const }
-];
+type Category = {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+  type: 'INCOME' | 'EXPENSE';
+};
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState(dummyCategories);
-  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -30,47 +28,111 @@ export default function CategoriesPage() {
   });
   const router = useRouter();
 
-  // Remove authentication check for now
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (!token) {
-  //     router.push('/login');
-  //     return;
-  //   }
-  //   fetchCategories();
-  // }, [router]);
+  // Fetch categories from the API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
 
-  // const fetchCategories = async () => {
-  //   try {
-  //     const response = await categoriesAPI.getAll();
-  //     setCategories(response.data);
-  //   } catch (error) {
-  //     console.error('Failed to fetch categories:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await categoriesAPI.getAll();
+        setCategories(response.data);
+      } catch (err: any) {
+        console.error('Failed to fetch categories:', err);
+        setError('Failed to load categories. Please try again.');
+        
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      toast.error('Category name is required');
-      return;
-    }
-
-    // For now, just add to local state
-    const newCategory = {
-      id: Date.now().toString(),
-      name: formData.name,
-      color: formData.color,
-      type: formData.type
-    };
     
-    setCategories([...categories, newCategory]);
-    toast.success('Category created successfully!');
-    setFormData({ name: '', color: '#3B82F6', icon: '', type: 'EXPENSE' });
-    setShowForm(false);
+    try {
+      setLoading(true);
+      const response = await categoriesAPI.create({
+        name: formData.name,
+        color: formData.color,
+        type: formData.type,
+        ...(formData.icon && { icon: formData.icon })
+      });
+      
+      setCategories([...categories, response.data]);
+      setShowForm(false);
+      setFormData({
+        name: '',
+        color: '#3B82F6',
+        icon: '',
+        type: 'EXPENSE'
+      });
+      toast.success('Category added successfully!');
+    } catch (err: any) {
+      console.error('Failed to create category:', err);
+      toast.error('Failed to create category. Please try again.');
+      
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    
+    try {
+      setLoading(true);
+      await categoriesAPI.delete(id);
+      setCategories(categories.filter(category => category.id !== id));
+      toast.success('Category deleted successfully!');
+    } catch (err: any) {
+      console.error('Failed to delete category:', err);
+      toast.error('Failed to delete category. Please try again.');
+      
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!formData.name.trim()) {
+  //     toast.error('Category name is required');
+  //     return;
+  //   }
+
+  //   // For now, just add to local state
+  //   const newCategory = {
+  //     id: Date.now().toString(),
+  //     name: formData.name,
+  //     color: formData.color,
+  //     type: formData.type
+  //   };
+    
+  //   setCategories([...categories, newCategory]);
+  //   toast.success('Category created successfully!');
+  //   setFormData({ name: '', color: '#3B82F6', icon: '', type: 'EXPENSE' });
+  //   setShowForm(false);
+  // };
 
   if (loading) {
     return (

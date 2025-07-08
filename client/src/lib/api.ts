@@ -67,6 +67,19 @@ export interface Budget {
   endDate: string;
 }
 
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  description: string;
+  category: 'SAVINGS' | 'TRAVEL' | 'TRANSPORTATION' | 'HOME' | 'EDUCATION' | 'OTHER';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DashboardStats {
   monthlyIncome: number;
   monthlyExpenses: number;
@@ -104,6 +117,7 @@ export const categoriesAPI = {
     icon?: string;
     type: 'INCOME' | 'EXPENSE';
   }) => api.post<Category>('/categories', data),
+  delete: (id: string) => api.delete(`/categories/${id}`),
 };
 
 // Budgets API
@@ -121,6 +135,29 @@ export const budgetsAPI = {
 // Dashboard API
 export const dashboardAPI = {
   getStats: () => api.get<DashboardStats>('/dashboard'),
+};
+
+// Goals API
+export const goalsAPI = {
+  getAll: () => api.get<Goal[]>('/goals'),
+  create: (data: {
+    name: string;
+    targetAmount: number;
+    currentAmount?: number;
+    deadline: string;
+    description: string;
+    category: 'SAVINGS' | 'TRAVEL' | 'TRANSPORTATION' | 'HOME' | 'EDUCATION' | 'OTHER';
+  }) => api.post<Goal>('/goals', data),
+  update: (id: string, data: {
+    name?: string;
+    targetAmount?: number;
+    currentAmount?: number;
+    deadline?: string;
+    description?: string;
+    category?: 'SAVINGS' | 'TRAVEL' | 'TRANSPORTATION' | 'HOME' | 'EDUCATION' | 'OTHER';
+    status?: 'IN_PROGRESS' | 'COMPLETED';
+  }) => api.put<Goal>(`/goals/${id}`, data),
+  delete: (id: string) => api.delete(`/goals/${id}`),
 };
 
 export default api; 

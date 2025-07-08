@@ -22,31 +22,31 @@ interface User {
   createdAt: string;
 }
 
-// Dummy user data for testing
-const dummyUser: User = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john@example.com',
-  createdAt: '2024-01-15T00:00:00.000Z'
-};
-
 export default function Navbar() {
-  const [user, setUser] = useState<User>(dummyUser);
+  const [user, setUser] = useState<User | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const router = useRouter();
 
-  // Remove authentication check for now
-  // useEffect(() => {
-  //   const userData = localStorage.getItem('user');
-  //   if (userData) {
-  //     setUser(JSON.parse(userData));
-  //   }
-  // }, []);
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
+    }
+  }, [router]);
 
   const handleLogout = () => {
-    // For now, just redirect to dashboard instead of login
-    router.push('/dashboard');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    router.push('/login');
   };
 
   const formatDate = (dateString: string) => {

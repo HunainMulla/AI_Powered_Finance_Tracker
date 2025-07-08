@@ -1,42 +1,39 @@
-# Personal Finance Tracker
+# Finance Tracker - Dynamic Web Application
 
-A modern, full-stack personal finance tracking application built with Next.js, Node.js, MongoDB, and Mongoose.
+A full-stack finance tracking application built with Next.js, Express.js, and MongoDB. Users can register, login, and manage their personal finances including transactions, budgets, categories, and financial goals.
 
 ## Features
 
-- **User Authentication**: Secure login and registration system
-- **Transaction Management**: Add, view, and delete income and expenses
-- **Category Management**: Organize transactions with custom categories
-- **Budget Tracking**: Set and monitor spending budgets
-- **Dashboard Analytics**: View monthly income, expenses, and balance
+- **User Authentication**: Register and login with JWT tokens
+- **Dashboard**: Real-time financial overview with monthly stats
+- **Transactions**: Add, view, and delete income/expense transactions
+- **Categories**: Organize transactions with custom categories
+- **Budgets**: Set and track spending limits
+- **Financial Goals**: Set and monitor progress towards financial milestones
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Tech Stack
 
 ### Frontend
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Hook Form** - Form handling and validation
-- **Axios** - HTTP client for API calls
-- **Lucide React** - Beautiful icons
-- **React Hot Toast** - Toast notifications
+- Next.js 14 (React)
+- TypeScript
+- Tailwind CSS
+- Lucide React Icons
+- React Hook Form
+- React Hot Toast
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **MongoDB** - NoSQL database
-- **Mongoose** - MongoDB ODM (Object Document Mapper)
-- **JWT** - Authentication tokens
-- **bcryptjs** - Password hashing
-- **CORS** - Cross-origin resource sharing
+- Node.js
+- Express.js
+- MongoDB with Mongoose
+- JWT Authentication
+- bcryptjs for password hashing
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js 18+ 
-- MongoDB (local or cloud)
+- Node.js (v16 or higher)
+- MongoDB (local or MongoDB Atlas)
 - npm or yarn
 
 ### Installation
@@ -47,13 +44,13 @@ A modern, full-stack personal finance tracking application built with Next.js, N
    cd Finance_Project
    ```
 
-2. **Install server dependencies**
+2. **Install backend dependencies**
    ```bash
    cd server
    npm install
    ```
 
-3. **Install client dependencies**
+3. **Install frontend dependencies**
    ```bash
    cd ../client
    npm install
@@ -61,36 +58,20 @@ A modern, full-stack personal finance tracking application built with Next.js, N
 
 4. **Set up environment variables**
 
-   Create a `config.env` file in the server directory:
+   Create a `config.env` file in the `server` directory:
    ```env
-   DATABASE_URL="mongodb://localhost:27017/finance_tracker"
-   JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+   DATABASE_URL=mongodb://localhost:27017/finance_tracker
+   JWT_SECRET=your_jwt_secret_key_here
    PORT=5000
    ```
 
-   Create a `.env.local` file in the client directory:
-   ```env
-   NEXT_PUBLIC_API_URL="http://localhost:5000/api"
-   ```
-
-5. **Add dummy data for testing (optional)**
+5. **Start the backend server**
    ```bash
    cd server
-   npm run seed
-   ```
-   This will create a test account with sample data:
-   - Email: john@example.com
-   - Password: password123
-
-6. **Start the development servers**
-
-   Start the backend server:
-   ```bash
-   cd server
-   npm run dev
+   npm start
    ```
 
-   Start the frontend development server:
+6. **Start the frontend development server**
    ```bash
    cd client
    npm run dev
@@ -100,68 +81,23 @@ A modern, full-stack personal finance tracking application built with Next.js, N
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
 
-## Project Structure
+## Usage
 
-```
-Finance_Project/
-├── client/                 # Next.js frontend
-│   ├── src/
-│   │   ├── app/           # App Router pages
-│   │   ├── components/    # React components
-│   │   └── lib/          # Utilities and API
-│   ├── package.json
-│   └── ...
-├── server/                # Node.js backend
-│   ├── models/           # Mongoose models
-│   ├── config/           # Database configuration
-│   ├── index.js          # Express server
-│   ├── package.json
-│   └── ...
-└── README.md
-```
-
-## Database Models
-
-The application uses MongoDB with Mongoose schemas:
-
-### User Model
-- `name`: User's full name
-- `email`: Unique email address
-- `password`: Hashed password
-- `timestamps`: Created and updated timestamps
-
-### Transaction Model
-- `amount`: Transaction amount
-- `type`: INCOME or EXPENSE
-- `description`: Transaction description
-- `date`: Transaction date
-- `categoryId`: Reference to Category
-- `userId`: Reference to User
-- `timestamps`: Created and updated timestamps
-
-### Category Model
-- `name`: Category name
-- `color`: Category color for UI
-- `icon`: Optional icon
-- `type`: INCOME or EXPENSE
-- `userId`: Reference to User
-- `timestamps`: Created and updated timestamps
-
-### Budget Model
-- `name`: Budget name
-- `amount`: Budget amount
-- `spent`: Amount spent so far
-- `period`: MONTHLY, YEARLY, or CUSTOM
-- `startDate`: Budget start date
-- `endDate`: Budget end date
-- `userId`: Reference to User
-- `timestamps`: Created and updated timestamps
+1. **Register a new account** at http://localhost:3000/register
+2. **Login** with your credentials
+3. **Add categories** for organizing your transactions
+4. **Create transactions** to track income and expenses
+5. **Set budgets** to monitor spending
+6. **Create financial goals** to track progress
+7. **View your dashboard** for an overview of your finances
 
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user profile
+- `PUT /api/auth/me` - Update user profile
 
 ### Transactions
 - `GET /api/transactions` - Get all transactions
@@ -171,43 +107,47 @@ The application uses MongoDB with Mongoose schemas:
 ### Categories
 - `GET /api/categories` - Get all categories
 - `POST /api/categories` - Create new category
+- `DELETE /api/categories/:id` - Delete category
 
 ### Budgets
 - `GET /api/budgets` - Get all budgets
 - `POST /api/budgets` - Create new budget
 
+### Goals
+- `GET /api/goals` - Get all goals
+- `POST /api/goals` - Create new goal
+- `PUT /api/goals/:id` - Update goal
+- `DELETE /api/goals/:id` - Delete goal
+
 ### Dashboard
 - `GET /api/dashboard` - Get dashboard statistics
 
-## Usage
+## Project Structure
 
-1. **Register/Login**: Create an account or sign in
-2. **Create Categories**: Set up categories for your transactions
-3. **Add Transactions**: Record your income and expenses
-4. **View Dashboard**: Monitor your financial overview
-5. **Set Budgets**: Create spending limits (optional)
-
-## Mongoose Features Used
-
-- **Schema Validation**: Built-in validation for all fields
-- **Middleware**: Password hashing before save
-- **Virtual Properties**: Computed fields like budget remaining
-- **Indexes**: Performance optimization for queries
-- **Population**: Joining related documents
-- **Aggregation**: Complex queries for dashboard stats
+```
+Finance_Project/
+├── client/                 # Next.js frontend
+│   ├── src/
+│   │   ├── app/           # App router pages
+│   │   ├── components/    # React components
+│   │   └── lib/          # API utilities
+│   └── package.json
+├── server/                # Express.js backend
+│   ├── models/           # MongoDB models
+│   ├── config/           # Database configuration
+│   ├── index.js          # Main server file
+│   └── package.json
+└── README.md
+```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Test thoroughly
 5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License.
-
-## Support
-
-For support, please open an issue in the GitHub repository. 
+This project is licensed under the MIT License. 

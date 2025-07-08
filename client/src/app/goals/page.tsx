@@ -2,108 +2,139 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Target, Calendar, DollarSign, TrendingUp, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Target, Calendar, DollarSign, TrendingUp, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 
-// Dummy goals data for testing
-const dummyGoals = [
-  {
-    id: '1',
-    name: 'Emergency Fund',
-    targetAmount: 10000,
-    currentAmount: 6500,
-    deadline: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'IN_PROGRESS' as const,
-    description: 'Save 6 months of living expenses',
-    category: 'SAVINGS' as const
-  },
-  {
-    id: '2',
-    name: 'Vacation Fund',
-    targetAmount: 3000,
-    currentAmount: 3000,
-    deadline: new Date(Date.now() + 2 * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'COMPLETED' as const,
-    description: 'Trip to Europe next summer',
-    category: 'TRAVEL' as const
-  },
-  {
-    id: '3',
-    name: 'New Car Down Payment',
-    targetAmount: 8000,
-    currentAmount: 1200,
-    deadline: new Date(Date.now() + 12 * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'IN_PROGRESS' as const,
-    description: '20% down payment for a new car',
-    category: 'TRANSPORTATION' as const
-  },
-  {
-    id: '4',
-    name: 'Home Renovation',
-    targetAmount: 25000,
-    currentAmount: 5000,
-    deadline: new Date(Date.now() + 18 * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'IN_PROGRESS' as const,
-    description: 'Kitchen and bathroom renovation',
-    category: 'HOME' as const
-  }
-];
-
-type Goal = {
+interface Goal {
   id: string;
   name: string;
   targetAmount: number;
   currentAmount: number;
   deadline: string;
-  status: 'IN_PROGRESS' | 'COMPLETED';
-  description: string;
+  description?: string;
   category: 'SAVINGS' | 'TRAVEL' | 'TRANSPORTATION' | 'HOME' | 'EDUCATION' | 'OTHER';
-};
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[]>(dummyGoals);
-  const [loading, setLoading] = useState(false);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const router = useRouter();
+  
   const [formData, setFormData] = useState({
     name: '',
     targetAmount: '',
     currentAmount: '',
-    deadline: '',
+    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     description: '',
     category: 'SAVINGS' as 'SAVINGS' | 'TRAVEL' | 'TRANSPORTATION' | 'HOME' | 'EDUCATION' | 'OTHER'
   });
-  const router = useRouter();
+
+  // Fetch goals from the API
+  useEffect(() => {
+    const fetchGoals = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("http://localhost:5000/api/goals", { 
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          method: "GET"
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch goals");
+        }
+        
+        const data = await response.json();
+        setGoals(data);
+      } catch (err: any) {
+        console.error('Failed to fetch goals:', err);
+        setError('Failed to load goals. Please try again.');
+        
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGoals();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.targetAmount || !formData.deadline) {
-      toast.error('Name, target amount, and deadline are required');
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    const newGoal: Goal = {
-      id: Date.now().toString(),
-      name: formData.name,
-      targetAmount: parseFloat(formData.targetAmount),
-      currentAmount: parseFloat(formData.currentAmount) || 0,
-      deadline: formData.deadline,
-      status: 'IN_PROGRESS',
-      description: formData.description,
-      category: formData.category
-    };
-    
-    setGoals([...goals, newGoal]);
-    toast.success('Goal created successfully!');
-    setFormData({ 
-      name: '', 
-      targetAmount: '', 
-      currentAmount: '', 
-      deadline: '', 
-      description: '', 
-      category: 'SAVINGS' 
-    });
-    setShowForm(false);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch("http://localhost:5000/api/goals", { 
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        method: "POST",
+        body: JSON.stringify({
+          name: formData.name,
+          targetAmount: parseFloat(formData.targetAmount),
+          currentAmount: parseFloat(formData.currentAmount) || 0,
+          deadline: formData.deadline,
+          description: formData.description,
+          category: formData.category
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create goal");
+      }
+      
+      const newGoal = await response.json();
+      setGoals([...goals, newGoal]);
+      toast.success('Goal created successfully!');
+      setShowForm(false);
+      setFormData({
+        name: '',
+        targetAmount: '',
+        currentAmount: '',
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        description: '',
+        category: 'SAVINGS'
+      });
+    } catch (err: any) {
+      console.error('Failed to create goal:', err);
+      toast.error('Failed to create goal. Please try again.');
+      
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getProgressPercentage = (current: number, target: number) => {

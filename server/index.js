@@ -260,6 +260,117 @@ app.post('/api/budgets', authenticateToken, async (req, res) => {
   }
 });
 
+// Goals Routes
+app.get('/api/goals', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user.goals);
+  } catch (error) {
+    console.error('Get goals error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/goals', authenticateToken, async (req, res) => {
+  try {
+    const { name, targetAmount, currentAmount, deadline, description, category } = req.body;
+
+    if (!name || !targetAmount || !deadline) {
+      return res.status(400).json({ error: 'Name, target amount, and deadline are required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const newGoal = {
+      name,
+      targetAmount: parseFloat(targetAmount),
+      currentAmount: parseFloat(currentAmount) || 0,
+      deadline: new Date(deadline),
+      status: 'IN_PROGRESS',
+      description: description || '',
+      category: category || 'SAVINGS',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    user.goals.push(newGoal);
+    await user.save();
+
+    res.status(201).json(newGoal);
+  } catch (error) {
+    console.error('Create goal error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/goals/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, targetAmount, currentAmount, deadline, description, category, status } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const goalIndex = user.goals.findIndex(g => g._id.toString() === id);
+    if (goalIndex === -1) {
+      return res.status(404).json({ error: 'Goal not found' });
+    }
+
+    const goal = user.goals[goalIndex];
+    
+    // Update only the fields that are provided
+    if (name) goal.name = name;
+    if (targetAmount) goal.targetAmount = parseFloat(targetAmount);
+    if (currentAmount !== undefined) goal.currentAmount = parseFloat(currentAmount);
+    if (deadline) goal.deadline = new Date(deadline);
+    if (description !== undefined) goal.description = description;
+    if (category) goal.category = category;
+    if (status) goal.status = status;
+    
+    goal.updatedAt = new Date();
+    
+    user.goals[goalIndex] = goal;
+    await user.save();
+
+    res.json(goal);
+  } catch (error) {
+    console.error('Update goal error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const goalIndex = user.goals.findIndex(g => g._id.toString() === id);
+    if (goalIndex === -1) {
+      return res.status(404).json({ error: 'Goal not found' });
+    }
+
+    user.goals.splice(goalIndex, 1);
+    await user.save();
+
+    res.json({ message: 'Goal deleted successfully' });
+  } catch (error) {
+    console.error('Delete goal error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Dashboard Stats
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
   try {
@@ -324,6 +435,97 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Finance Tracker API is running' });
+});
+
+// Update current user's profile
+app.put('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    
+    // Basic validation
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    
+    // Check if email is already taken by another user
+    const existingUser = await User.findOne({ email, _id: { $ne: req.user._id } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email is already in use' });
+    }
+    
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { name, email, phone } },
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      createdAt: user.createdAt,
+      currency: user.currency || 'USD',
+      timezone: user.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      avatar: user.avatar || null,
+      notifications: user.notifications || {
+        email: true,
+        push: true,
+        sms: false
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get current user's profile
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    // The user is already authenticated by the middleware and available in req.user
+    const user = await User.findById(req.user._id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      createdAt: user.createdAt,
+      currency: user.currency || 'USD',
+      timezone: user.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      avatar: user.avatar || null,
+      notifications: user.notifications || {
+        email: true,
+        push: true,
+        sms: false
+      }
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get all users (for admin purposes)
+app.get('/api/auth/all', authenticateToken, async (req, res) => {
+  try {
+    // In a real app, you'd want to check if the user is an admin
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Start server
