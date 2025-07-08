@@ -66,14 +66,14 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
+    <nav className="bg-gradient-to-r from-gray-900 to-blue-900 shadow-xl border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and Navigation */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <h1 className="text-white text-xl font-bold flex items-center">
-                <DollarSign className="h-6 w-6 mr-2" />
+                <DollarSign className="h-6 w-6 mr-2 text-blue-400" />
                 Finance Tracker
               </h1>
             </div>
@@ -86,7 +86,7 @@ export default function Navbar() {
                   <a
                     key={item.name}
                     href={item.href}
-                    className="text-white hover:text-indigo-200 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center"
+                    className="text-gray-300 hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center"
                   >
                     <Icon className="h-4 w-4 mr-2" />
                     {item.name}
@@ -102,10 +102,10 @@ export default function Navbar() {
             <div className="hidden md:block relative">
               <button
                 onClick={() => setShowProfile(!showProfile)}
-                className="flex items-center text-white hover:text-indigo-200 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                className="flex items-center text-gray-300 hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
               >
-                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-2">
-                  <User className="h-4 w-4" />
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-2">
+                  <User className="h-4 w-4 text-white" />
                 </div>
                 <span>{user?.name || 'User'}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
@@ -113,14 +113,14 @@ export default function Navbar() {
 
               {/* Profile Dropdown */}
               {showProfile && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-50">
-                  <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
+                <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl border border-gray-700 py-1 z-50">
+                  <div className="px-4 py-3 border-b border-gray-700">
+                    <p className="text-sm font-medium text-white">{user?.name}</p>
+                    <p className="text-sm text-gray-400">{user?.email}</p>
                   </div>
-                  <div className="px-4 py-3 border-b border-gray-200">
+                  <div className="px-4 py-3 border-b border-gray-700">
                     <p className="text-xs text-gray-500">Member since</p>
-                    <p className="text-sm text-gray-900">{user?.createdAt ? formatDate(user.createdAt) : 'N/A'}</p>
+                    <p className="text-sm text-gray-300">{user?.createdAt ? formatDate(user.createdAt) : 'N/A'}</p>
                   </div>
                   <div className="px-4 py-2">
                     <button
@@ -128,14 +128,14 @@ export default function Navbar() {
                         router.push('/profile');
                         setShowProfile(false);
                       }}
-                      className="flex items-center w-full text-left px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                      className="flex items-center w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors duration-200"
                     >
                       <User className="h-4 w-4 mr-2" />
                       View Profile
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center w-full text-left px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+                      className="flex items-center w-full text-left px-2 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-md transition-colors duration-200"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Sign out
@@ -149,7 +149,7 @@ export default function Navbar() {
             <div className="md:hidden">
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="text-white hover:text-indigo-200 p-2 rounded-md"
+                className="text-gray-300 hover:text-blue-400 p-2 rounded-md"
               >
                 {showMobileMenu ? (
                   <X className="h-6 w-6" />
@@ -164,7 +164,7 @@ export default function Navbar() {
 
       {/* Mobile Navigation */}
       {showMobileMenu && (
-        <div className="md:hidden bg-white shadow-lg">
+        <div className="md:hidden bg-gray-800 shadow-xl border-t border-gray-700">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -172,7 +172,7 @@ export default function Navbar() {
                 <a
                   key={item.name}
                   href={item.href}
-                  className="text-gray-700 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center"
+                  className="text-gray-300 hover:text-blue-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center"
                 >
                   <Icon className="h-5 w-5 mr-3" />
                   {item.name}
@@ -181,11 +181,11 @@ export default function Navbar() {
             })}
             
             {/* Mobile Profile Section */}
-            <div className="border-t border-gray-200 pt-4 pb-3">
+            <div className="border-t border-gray-700 pt-4 pb-3">
               <div className="px-3 py-2">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm font-medium text-white">{user?.name}</p>
+                <p className="text-sm text-gray-400">{user?.email}</p>
+                <p className="text-xs text-gray-500 mt-1">
                   Member since {user?.createdAt ? formatDate(user.createdAt) : 'N/A'}
                 </p>
               </div>
@@ -194,14 +194,14 @@ export default function Navbar() {
                   router.push('/profile');
                   setShowMobileMenu(false);
                 }}
-                className="flex items-center w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                className="flex items-center w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md transition-colors duration-200"
               >
                 <User className="h-4 w-4 mr-2" />
                 View Profile
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
+                className="flex items-center w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 rounded-md transition-colors duration-200"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign out

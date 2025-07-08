@@ -50,8 +50,19 @@ const dummyGoals = [
   }
 ];
 
+type Goal = {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  description: string;
+  category: 'SAVINGS' | 'TRAVEL' | 'TRANSPORTATION' | 'HOME' | 'EDUCATION' | 'OTHER';
+};
+
 export default function GoalsPage() {
-  const [goals, setGoals] = useState(dummyGoals);
+  const [goals, setGoals] = useState<Goal[]>(dummyGoals);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -71,14 +82,13 @@ export default function GoalsPage() {
       return;
     }
 
-    // For now, just add to local state
-    const newGoal = {
+    const newGoal: Goal = {
       id: Date.now().toString(),
       name: formData.name,
       targetAmount: parseFloat(formData.targetAmount),
       currentAmount: parseFloat(formData.currentAmount) || 0,
       deadline: formData.deadline,
-      status: 'IN_PROGRESS' as const,
+      status: 'IN_PROGRESS',
       description: formData.description,
       category: formData.category
     };
@@ -164,12 +174,12 @@ export default function GoalsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading your financial goals...</p>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-300 text-lg">Loading your financial goals...</p>
           </div>
         </div>
       </div>
@@ -177,19 +187,19 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <Navbar />
       
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Financial Goals</h1>
-            <p className="text-gray-600 mt-2">Track your progress towards financial milestones</p>
+            <h1 className="text-3xl font-bold text-white">Financial Goals</h1>
+            <p className="text-gray-300 mt-2">Track your progress towards financial milestones</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 shadow-sm hover:shadow-md transition-all duration-200"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Plus className="h-5 w-5" />
             <span>Add Goal</span>
@@ -198,30 +208,30 @@ export default function GoalsPage() {
 
         {/* Add Goal Form */}
         {showForm && (
-          <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Financial Goal</h3>
+          <div className="mb-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Add New Financial Goal</h3>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Goal Name
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
                     placeholder="Enter goal name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Category
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
                   >
                     <option value="SAVINGS">Savings</option>
                     <option value="TRAVEL">Travel</option>
@@ -232,7 +242,7 @@ export default function GoalsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Target Amount
                   </label>
                   <input
@@ -240,12 +250,12 @@ export default function GoalsPage() {
                     step="0.01"
                     value={formData.targetAmount}
                     onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
                     placeholder="Enter target amount"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Current Amount (optional)
                   </label>
                   <input
@@ -253,30 +263,30 @@ export default function GoalsPage() {
                     step="0.01"
                     value={formData.currentAmount}
                     onChange={(e) => setFormData({ ...formData, currentAmount: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
                     placeholder="Enter current amount"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Deadline
                   </label>
                   <input
                     type="date"
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Description (optional)
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
                     placeholder="Describe your goal"
                   />
                 </div>
@@ -284,14 +294,14 @@ export default function GoalsPage() {
               <div className="flex space-x-4">
                 <button
                   type="submit"
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
                   Create Goal
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+                  className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -308,10 +318,10 @@ export default function GoalsPage() {
             const daysRemaining = getDaysRemaining(goal.deadline);
             
             return (
-              <div key={goal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+              <div key={goal.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <Target className="h-6 w-6 text-indigo-600" />
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                    <Target className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(goal.category)}`}>
@@ -323,35 +333,35 @@ export default function GoalsPage() {
                   </div>
                 </div>
                 
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{goal.name}</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">{goal.name}</h3>
                 {goal.description && (
-                  <p className="text-sm text-gray-600 mb-4">{goal.description}</p>
+                  <p className="text-sm text-gray-400 mb-4">{goal.description}</p>
                 )}
                 
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Target</span>
-                    <span className="font-medium">${goal.targetAmount.toLocaleString()}</span>
+                    <span className="text-gray-400">Target</span>
+                    <span className="font-medium text-white">${goal.targetAmount.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Current</span>
-                    <span className="font-medium">${goal.currentAmount.toLocaleString()}</span>
+                    <span className="text-gray-400">Current</span>
+                    <span className="font-medium text-white">${goal.currentAmount.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Remaining</span>
-                    <span className={`font-medium ${goal.currentAmount >= goal.targetAmount ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className="text-gray-400">Remaining</span>
+                    <span className={`font-medium ${goal.currentAmount >= goal.targetAmount ? 'text-green-400' : 'text-red-400'}`}>
                       ${(goal.targetAmount - goal.currentAmount).toLocaleString()}
                     </span>
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Progress</span>
-                      <span className="font-medium">{progressPercentage.toFixed(1)}%</span>
+                      <span className="text-gray-400">Progress</span>
+                      <span className="font-medium text-white">{progressPercentage.toFixed(1)}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-700 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${progressColor}`}
                         style={{ width: `${progressPercentage}%` }}
@@ -360,13 +370,13 @@ export default function GoalsPage() {
                   </div>
                 </div>
                 
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="mt-4 pt-4 border-t border-gray-700">
+                  <div className="flex items-center justify-between text-xs text-gray-400">
                     <span className="flex items-center">
                       <Calendar className="h-3 w-3 mr-1" />
                       {formatDate(goal.deadline)}
                     </span>
-                    <span className={daysRemaining < 0 ? 'text-red-600' : daysRemaining < 30 ? 'text-yellow-600' : 'text-green-600'}>
+                    <span className={daysRemaining < 0 ? 'text-red-400' : daysRemaining < 30 ? 'text-yellow-400' : 'text-green-400'}>
                       {daysRemaining < 0 ? 'Overdue' : `${daysRemaining} days left`}
                     </span>
                   </div>
