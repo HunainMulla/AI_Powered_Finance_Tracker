@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, PieChart, Calendar } from 'lucide-react';
@@ -9,11 +7,27 @@ import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 import { budgetsAPI } from '@/lib/api';
 
-type Budget = {
+// API response type from the backend
+interface BudgetApiResponse {
+  _id: string;
+  id?: string;
+  name: string;
+  amount: number;
+  period: 'MONTHLY' | 'YEARLY' | 'CUSTOM';
+  startDate: string;
+  endDate: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: any; // Allow additional properties
+}
+
+// Frontend Budget type with all required fields
+interface Budget {
   id: string;
   name: string;
   amount: number;
-  period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+  period: 'MONTHLY' | 'YEARLY' | 'CUSTOM';
   startDate: string;
   endDate: string;
   userId: string;
@@ -21,12 +35,12 @@ type Budget = {
   updatedAt: string;
 };
 
-type BudgetWithSpent = Budget & {
+interface BudgetWithSpent extends Budget {
   spent: number;
   remaining: number;
   progress: number;
   isOverBudget: boolean;
-};
+}
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<BudgetWithSpent[]>([]);
@@ -36,7 +50,7 @@ export default function BudgetsPage() {
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
-    period: 'MONTHLY' as 'WEEKLY' | 'MONTHLY' | 'YEARLY',
+    period: 'MONTHLY' as Budget['period'],
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
@@ -56,14 +70,35 @@ export default function BudgetsPage() {
         setError(null);
         const response = await budgetsAPI.getAll();
         
-        // Transform the budgets to include calculated fields
-        const budgetsWithCalculations = response.data.map((budget: Budget) => ({
-          ...budget,
-          spent: 0, // This should come from the backend in a real app
-          remaining: budget.amount - 0, // This should come from the backend
-          progress: 0, // This should be calculated
-          isOverBudget: false // This should be calculated
-        }));
+        // Transform the API response to our frontend BudgetWithSpent type
+        const apiBudgets = Array.isArray(response.data) ? response.data : [response.data];
+        const budgetsWithCalculations = apiBudgets.map((apiBudget: any) => {
+          const spent = 0; // This should come from the backend in a real app
+          const progress = Math.min((spent / apiBudget.amount) * 100, 100);
+          const remaining = Math.max(0, apiBudget.amount - spent);
+          
+          // Create a properly typed budget object
+          const budget: Budget = {
+            id: apiBudget.id || apiBudget._id,
+            name: apiBudget.name,
+            amount: apiBudget.amount,
+            period: apiBudget.period,
+            startDate: apiBudget.startDate,
+            endDate: apiBudget.endDate,
+            userId: apiBudget.userId,
+            createdAt: apiBudget.createdAt,
+            updatedAt: apiBudget.updatedAt
+          };
+          
+          // Return with calculated fields
+          return {
+            ...budget,
+            spent,
+            remaining,
+            progress,
+            isOverBudget: spent > budget.amount
+          } as BudgetWithSpent;
+        });
         
         setBudgets(budgetsWithCalculations);
       } catch (err: any) {
@@ -105,11 +140,24 @@ export default function BudgetsPage() {
         endDate: formData.endDate
       });
       
-      // Add the new budget to the list with calculated fields
+      // Create the budget with calculated fields
+      const apiBudget = response.data as unknown as BudgetApiResponse;
+      const budget: Budget = {
+        id: apiBudget.id || apiBudget._id,
+        name: apiBudget.name,
+        amount: apiBudget.amount,
+        period: apiBudget.period,
+        startDate: apiBudget.startDate,
+        endDate: apiBudget.endDate,
+        userId: apiBudget.userId,
+        createdAt: apiBudget.createdAt,
+        updatedAt: apiBudget.updatedAt
+      };
+      
       const newBudget: BudgetWithSpent = {
-        ...response.data,
+        ...budget,
         spent: 0, // This should come from the backend
-        remaining: response.data.amount,
+        remaining: budget.amount,
         progress: 0,
         isOverBudget: false
       };
@@ -215,12 +263,12 @@ export default function BudgetsPage() {
                   </label>
                   <select
                     value={formData.period}
-                    onChange={(e) => setFormData({ ...formData, period: e.target.value as 'MONTHLY' | 'WEEKLY' | 'YEARLY' })}
+                    onChange={(e) => setFormData({ ...formData, period: e.target.value as Budget['period'] })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
                   >
-                    <option value="WEEKLY">Weekly</option>
                     <option value="MONTHLY">Monthly</option>
                     <option value="YEARLY">Yearly</option>
+                    <option value="CUSTOM">Custom</option>
                   </select>
                 </div>
                 <div>
