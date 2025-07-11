@@ -25,6 +25,7 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const router = useRouter();
   
   const [formData, setFormData] = useState({
@@ -133,30 +134,61 @@ export default function GoalsPage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch("http://localhost:5000/api/goals", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          targetAmount: parseFloat(formData.targetAmount),
-          currentAmount: parseFloat(formData.currentAmount) || 0,
-          deadline: formData.deadline,
-          description: formData.description,
-          category: formData.category
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to create goal");
+      let response;
+      if (editingGoal) {
+        // Update existing goal
+        response = await fetch(`http://localhost:5000/api/goals/${editingGoal._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            targetAmount: parseFloat(formData.targetAmount),
+            currentAmount: parseFloat(formData.currentAmount) || 0,
+            deadline: formData.deadline,
+            description: formData.description,
+            category: formData.category
+          })
+        });
+      } else {
+        // Create new goal
+        response = await fetch("http://localhost:5000/api/goals", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            targetAmount: parseFloat(formData.targetAmount),
+            currentAmount: parseFloat(formData.currentAmount) || 0,
+            deadline: formData.deadline,
+            description: formData.description,
+            category: formData.category
+          })
+        });
       }
       
-      const newGoal = await response.json();
-      setGoals([...goals, newGoal]);
-      toast.success('Goal created successfully!');
+      if (!response.ok) {
+        throw new Error(editingGoal ? "Failed to update goal" : "Failed to create goal");
+      }
+      
+      const updatedGoal = await response.json();
+      
+      if (editingGoal) {
+        setGoals(goals.map(goal => 
+          goal._id === editingGoal._id ? updatedGoal : goal
+        ));
+        toast.success('Goal updated successfully!');
+      } else {
+        setGoals([...goals, updatedGoal]);
+        toast.success('Goal created successfully!');
+      }
+      
       setShowForm(false);
+      setEditingGoal(null);
       setFormData({
         name: '',
         targetAmount: '',
@@ -270,7 +302,10 @@ export default function GoalsPage() {
             <p className="text-gray-300 mt-2">Track your progress towards financial milestones</p>
           </div>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setEditingGoal(null);
+              setShowForm(true);
+            }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Plus className="h-5 w-5" />
@@ -281,7 +316,9 @@ export default function GoalsPage() {
         {/* Add Goal Form */}
         {showForm && (
           <div className="mb-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Add New Financial Goal</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              {editingGoal ? 'Edit Financial Goal' : 'Add New Financial Goal'}
+            </h3>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -368,7 +405,7 @@ export default function GoalsPage() {
                   type="submit"
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
-                  Create Goal
+                  {editingGoal ? 'Update Goal' : 'Create Goal'}
                 </button>
                 <button
                   type="button"
@@ -396,8 +433,30 @@ export default function GoalsPage() {
                     <h3 className="text-lg font-semibold text-white">{goal.name}</h3>
                     <div className="flex items-center gap-2 ml-4">
                       <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(goal.status)}`}>
-                        {goal.status === 'COMPLETED' ? 'Completed' : 'In Progress'}
+                        {goal.currentAmount >= goal.targetAmount ? 'Completed' : 'In Progress'}
                       </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingGoal(goal);
+                          setFormData({
+                            name: goal.name,
+                            targetAmount: goal.targetAmount.toString(),
+                            currentAmount: goal.currentAmount.toString(),
+                            deadline: goal.deadline.split('T')[0],
+                            description: goal.description || '',
+                            category: goal.category
+                          });
+                          setShowForm(true);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="text-blue-400 hover:text-blue-300 transition-colors mr-2"
+                        title="Edit goal"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
