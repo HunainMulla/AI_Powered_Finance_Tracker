@@ -138,10 +138,19 @@ app.get('/api/transactions', authenticateToken, async (req, res) => {
 
 app.post('/api/transactions', authenticateToken, async (req, res) => {
   try {
+    console.log('Request body:', req.body);
     const { amount, type, description, date, categoryId } = req.body;
 
     if (!amount || !type || !description || !date || !categoryId) {
+      console.log('Missing fields:', { amount, type, description, date, categoryId });
       return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Validate category exists
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      console.log('Category not found:', categoryId);
+      return res.status(400).json({ error: 'Invalid category' });
     }
 
     const transaction = new Transaction({
@@ -153,13 +162,23 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
       userId: req.user._id
     });
 
+    console.log('Saving transaction:', transaction);
     await transaction.save();
     await transaction.populate('categoryId');
 
     res.json(transaction);
   } catch (error) {
     console.error('Create transaction error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    res.status(500).json({ 
+      error: 'Server error',
+      message: error.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
   }
 });
 

@@ -6,6 +6,7 @@ import { Plus, Trash2, Calendar, DollarSign, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 import { transactionsAPI } from '@/lib/api';
+import TransactionForm from '@/components/TransactionForm';
 
 interface Category {
   id: string;
@@ -187,6 +188,9 @@ export default function TransactionsPage() {
             <span>Add Transaction</span>
           </button>
         </div>
+
+        {/* Add Transaction Form */}
+        {showForm && <TransactionForm />}
 
         {/* Transactions List */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

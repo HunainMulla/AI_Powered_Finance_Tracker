@@ -34,7 +34,9 @@ export default function TransactionForm() {
   const fetchCategories = async () => {
     try {
       const response = await categoriesAPI.getAll();
-      setCategories(response.data);
+      // Ensure each category has an id field that is the MongoDB ObjectId
+      const formatted = response.data.map((cat: any) => ({ ...cat, id: cat._id }));
+      setCategories(formatted);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }
