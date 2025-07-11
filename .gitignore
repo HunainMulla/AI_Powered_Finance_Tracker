@@ -29,3 +29,4 @@ server/config.env
 
 # Git backup files
 *.swp
+node_modules
