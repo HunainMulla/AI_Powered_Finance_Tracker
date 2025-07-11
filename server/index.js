@@ -396,6 +396,98 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+
+    // Get monthly summary data for the last 6 months
+    const monthlySummary = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      
+      const [income, expenses] = await Promise.all([
+        Transaction.aggregate([
+          {
+            $match: {
+              userId: req.user._id,
+              type: 'INCOME',
+              date: { $gte: monthStart, $lte: monthEnd }
+            }
+          },
+          { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]),
+        Transaction.aggregate([
+          {
+            $match: {
+              userId: req.user._id,
+              type: 'EXPENSE',
+              date: { $gte: monthStart, $lte: monthEnd }
+            }
+          },
+          { $group: { _id: null, total: { $sum: '$amount' } } }
+        ])
+      ]);
+
+      monthlySummary.push({
+        month: monthStart.toLocaleString('default', { month: 'short' }),
+        income: income[0]?.total || 0,
+        expense: expenses[0]?.total || 0
+      });
+    }
+
+    // Get category-wise spending
+    const categorySpending = await Transaction.aggregate([
+      {
+        $match: {
+          userId: req.user._id,
+          type: 'EXPENSE',
+          date: { $gte: startOfMonth, $lte: endOfMonth }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryId',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      { $unwind: '$category' },
+      {
+        $group: {
+          _id: '$category.name',
+          total: { $sum: '$amount' },
+          color: { $first: '$category.color' }
+        }
+      },
+      { $sort: { total: -1 } }
+    ]);
+
+    // Get spending trends for the last 30 days
+    const dailySpending = [];
+    for (let i = 29; i >= 0; i--) {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+      const dayStart = new Date(day.setHours(0, 0, 0, 0));
+      const dayEnd = new Date(day.setHours(23, 59, 59, 999));
+      
+      const expenses = await Transaction.aggregate([
+        {
+          $match: {
+            userId: req.user._id,
+            type: 'EXPENSE',
+            date: { $gte: dayStart, $lte: dayEnd }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]);
+
+      dailySpending.push({
+        date: dayStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        amount: expenses[0]?.total || 0
+      });
+    }
 
     const [monthlyIncome, monthlyExpenses, totalTransactions] = await Promise.all([
       Transaction.aggregate([
@@ -437,14 +529,21 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
       Transaction.countDocuments({ userId: req.user._id })
     ]);
 
-    const stats = {
+    res.json({
       monthlyIncome: monthlyIncome[0]?.total || 0,
       monthlyExpenses: monthlyExpenses[0]?.total || 0,
       monthlyBalance: (monthlyIncome[0]?.total || 0) - (monthlyExpenses[0]?.total || 0),
-      totalTransactions
-    };
-
-    res.json(stats);
+      totalTransactions,
+      charts: {
+        monthlySummary,
+        categorySpending: categorySpending.map(cat => ({
+          name: cat._id,
+          value: cat.total,
+          color: cat.color
+        })),
+        dailySpending
+      }
+    });
   } catch (error) {
     console.error('Dashboard stats error:', error);
     res.status(500).json({ error: 'Server error' });
