@@ -72,11 +72,12 @@ export default function AIChat({ showChat, setShowChat }: AIChatProps) {
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg overflow-hidden w-full max-w-full">
+      {/* Header */}
       <div className="p-3 sm:p-4 bg-indigo-600 text-white flex justify-between items-center">
         <h2 className="text-base sm:text-lg font-semibold">Finance Assistant</h2>
         <button 
           onClick={() => setShowChat(false)}
-          className="text-white hover:text-gray-200 focus:outline-none"
+          className="text-white hover:text-gray-200 focus:outline-none p-1"
           aria-label="Close chat"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,6 +86,7 @@ export default function AIChat({ showChat, setShowChat }: AIChatProps) {
         </button>
       </div>
       
+      {/* Messages */}
       <div className="flex-1 p-2 sm:p-4 overflow-y-auto space-y-3">
         {messages.map((message, index) => (
           <div
@@ -111,6 +113,7 @@ export default function AIChat({ showChat, setShowChat }: AIChatProps) {
             </div>
           </div>
         ))}
+        
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-100 text-gray-800 rounded-lg p-2 sm:p-3 max-w-[90%] sm:max-w-[80%]">
@@ -121,29 +124,35 @@ export default function AIChat({ showChat, setShowChat }: AIChatProps) {
             </div>
           </div>
         )}
+        
+        {/* Input Form */}
         <div ref={messagesEndRef} className="h-2" />
       </div>
 
-      <form onSubmit={handleSubmit} className="p-2 sm:p-3 border-t border-gray-200">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything about your finances..."
-            className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Send message"
-          >
-            <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
-        </div>
-      </form>
+      {/* Input Area */}
+      <div className="p-2 sm:p-3 border-t border-gray-200">
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="flex space-x-2 w-full">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask me anything about your finances..."
+              className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              disabled={isLoading}
+              aria-label="Type your message"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+              aria-label="Send message"
+            >
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
