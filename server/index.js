@@ -11,6 +11,9 @@ const Transaction = require('./models/Transaction');
 const Category = require('./models/Category');
 const Budget = require('./models/Budget');
 
+// Import routes
+const aiRoutes = require('./routes/aiRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -568,6 +571,13 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Finance Tracker API is running' });
+});
+
+// AI Routes
+app.use('/api/ai', aiRoutes);
+
+app.get('/', (req, res) => {
+  res.send('Finance Tracker API is running...');
 });
 
 // Update current user's profile

@@ -20,6 +20,7 @@ pnpm-debug.log*
 # Environment variables
 client/.env
 server/.env
+server/config.env
 .env
 
 # IDEs/editors

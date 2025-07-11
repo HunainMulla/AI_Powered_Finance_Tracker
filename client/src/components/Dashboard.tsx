@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, TrendingUp, TrendingDown, Activity, Plus, ArrowRight, Target } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Activity, Plus, ArrowRight, Target, MessageSquare } from 'lucide-react';
 import Navbar from './Navbar';
 import { dashboardAPI, transactionsAPI } from '@/lib/api';
 import dynamic from 'next/dynamic';
 import React from 'react';
+import AIChat from './AIChat';
 
 // Helper function to format dates
 const formatDate = (dateString: string) => {
@@ -99,7 +100,8 @@ export default function Dashboard() {
     }
   }));
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showChat, setShowChat] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -114,7 +116,7 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
       const [statsResponse, transactionsResponse] = await Promise.all([
         dashboardAPI.getStats(),
@@ -149,11 +151,11 @@ export default function Dashboard() {
         router.push('/login');
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <Navbar />
@@ -291,7 +293,22 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        {/* AI Chat Toggle Button - Fixed at bottom right */}
+        <button
+          onClick={() => setShowChat(!showChat)}
+          className="fixed bottom-8 right-8 z-50 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center"
+          aria-label="Chat with AI"
+        >
+          <MessageSquare className="h-6 w-6" />
+        </button>
+
+        {/* AI Chat Overlay */}
+        {showChat && (
+          <div className="fixed bottom-20 right-4 sm:right-8 z-50 w-[calc(100%-2rem)] sm:w-96 h-[calc(100%-7rem)] sm:h-[600px] bg-white rounded-lg shadow-xl overflow-hidden flex flex-col">
+            <AIChat showChat={showChat} setShowChat={setShowChat} />
+          </div>
+        )}
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
