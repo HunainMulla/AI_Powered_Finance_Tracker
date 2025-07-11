@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 
 interface Goal {
-  id: string;
+  _id: string;
+  id?: string; // Keep for backward compatibility
   name: string;
   targetAmount: number;
   currentAmount: number;
@@ -77,6 +78,44 @@ export default function GoalsPage() {
     fetchGoals();
   }, [router]);
 
+  const handleDeleteGoal = async (goalId: string) => {
+    console.log('Deleting goal with ID:', goalId);
+    if (!confirm('Are you sure you want to delete this goal? This action cannot be undone.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:5000/api/goals/${goalId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete goal');
+      }
+
+      // Remove the deleted goal from the list
+      setGoals(goals.filter(goal => goal._id !== goalId));
+      toast.success('Goal deleted successfully!');
+    } catch (err: any) {
+      console.error('Delete goal error:', err);
+      toast.error(err.message || 'Failed to delete goal');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.targetAmount || !formData.deadline) {
@@ -92,12 +131,14 @@ export default function GoalsPage() {
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/goals", { 
-        headers: { 
+      setError(null);
+      
+      const response = await fetch("http://localhost:5000/api/goals", {
+        method: "POST",
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        method: "POST",
         body: JSON.stringify({
           name: formData.name,
           targetAmount: parseFloat(formData.targetAmount),
@@ -350,21 +391,30 @@ export default function GoalsPage() {
             
             return (
               <div key={goal.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                    <Target className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(goal.category)}`}>
-                      {goal.category}
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(goal.status)}`}>
-                      {goal.status.replace('_', ' ')}
-                    </span>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-white">{goal.name}</h3>
+                    <div className="flex items-center gap-2 ml-4">
+                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(goal.status)}`}>
+                        {goal.status === 'COMPLETED' ? 'Completed' : 'In Progress'}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('Delete button clicked for goal:', goal);
+                          handleDeleteGoal(goal._id);
+                        }}
+                        className="text-red-400 hover:text-red-300 transition-colors"
+                        title="Delete goal"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
-                <h3 className="text-lg font-semibold text-white mb-2">{goal.name}</h3>
                 {goal.description && (
                   <p className="text-sm text-gray-400 mb-4">{goal.description}</p>
                 )}

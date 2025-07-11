@@ -369,13 +369,24 @@ app.put('/api/goals/:id', authenticateToken, async (req, res) => {
 app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Deleting goal with ID:', id);
 
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const goalIndex = user.goals.findIndex(g => g._id.toString() === id);
+    console.log('User goals:', user.goals);
+    
+    // Try to find the goal by _id (as string or ObjectId)
+    const goalIndex = user.goals.findIndex(g => {
+      const goalId = g._id ? g._id.toString() : g.id;
+      console.log('Comparing:', goalId, 'with', id);
+      return goalId === id;
+    });
+    
+    console.log('Found goal at index:', goalIndex);
+    
     if (goalIndex === -1) {
       return res.status(404).json({ error: 'Goal not found' });
     }
@@ -386,7 +397,11 @@ app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Goal deleted successfully' });
   } catch (error) {
     console.error('Delete goal error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ 
+      error: 'Server error',
+      message: error.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
   }
 });
 
