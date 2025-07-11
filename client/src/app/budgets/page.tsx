@@ -1,11 +1,25 @@
 'use client';
 
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, PieChart, Calendar, DollarSign, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { Plus, PieChart, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
-import { budgetsAPI, Budget } from '@/lib/api';
+import { budgetsAPI } from '@/lib/api';
+
+type Budget = {
+  id: string;
+  name: string;
+  amount: number;
+  period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+  startDate: string;
+  endDate: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 type BudgetWithSpent = Budget & {
   spent: number;
@@ -22,7 +36,7 @@ export default function BudgetsPage() {
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
-    period: 'MONTHLY' as 'MONTHLY' | 'YEARLY' | 'CUSTOM',
+    period: 'MONTHLY' as 'WEEKLY' | 'MONTHLY' | 'YEARLY',
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
@@ -77,9 +91,15 @@ export default function BudgetsPage() {
 
     try {
       setLoading(true);
+      const amount = parseFloat(formData.amount);
+      if (isNaN(amount) || amount <= 0) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+
       const response = await budgetsAPI.create({
         name: formData.name,
-        amount: parseFloat(formData.amount),
+        amount,
         period: formData.period,
         startDate: formData.startDate,
         endDate: formData.endDate
@@ -89,15 +109,27 @@ export default function BudgetsPage() {
       const newBudget: BudgetWithSpent = {
         ...response.data,
         spent: 0, // This should come from the backend
-        remaining: response.data.amount - 0, // Calculate remaining
-        progress: 0, // Calculate progress
-        isOverBudget: false // Determine if over budget
+        remaining: response.data.amount,
+        progress: 0,
+        isOverBudget: false
       };
-    
-    setBudgets([...budgets, newBudget]);
-    toast.success('Budget created successfully!');
-    setFormData({ name: '', amount: '', period: 'MONTHLY', startDate: '', endDate: '' });
-    setShowForm(false);
+      
+      setBudgets(prevBudgets => [...prevBudgets, newBudget]);
+      toast.success('Budget created successfully!');
+      setFormData({ 
+        name: '', 
+        amount: '', 
+        period: 'MONTHLY', 
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      });
+      setShowForm(false);
+    } catch (error: any) {
+      console.error('Failed to create budget:', error);
+      toast.error(error.response?.data?.message || 'Failed to create budget');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getProgressColor = (spent: number, amount: number) => {

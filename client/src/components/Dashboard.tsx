@@ -329,15 +329,15 @@ export default function Dashboard() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div key="monthly-overview" className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Monthly Overview</h3>
+            {/* <h3 className="text-lg font-semibold text-gray-200 mb-4"></h3> */}
             <div className="h-80 ">
               <MonthlySummaryChart data={stats.charts.monthlySummary} />
             </div>
           </div>
           
-          <div key="category-spending" className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-            <h3 className="text-lg font-semibold text-gray-200 mb-4">Spending by Category</h3>
-            <div className="h-80">
+          <div key="category-spending" className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 overflow-y-auto">
+            {/* <h3 className="text-lg font-semibold text-gray-200 mb-4">Spending by Category</h3> */}
+            <div className="h-80 mb-6">
               <CategorySpendingChart data={stats.charts.categorySpending} />
             </div>
           </div>
@@ -345,7 +345,7 @@ export default function Dashboard() {
 
         {/* Spending Trends */}
         <div key="daily-spending" className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 mb-8">
-          <h3 className="text-lg font-semibold text-gray-200 mb-4">Daily Spending (Last 30 Days)</h3>
+          {/* <h3 className="text-lg font-semibold text-gray-200 mb-4">Daily Spending (Last 30 Days)</h3> */}
           <div className="h-96">
             <SpendingTrendChart 
               data={stats.charts.dailySpending} 
@@ -436,24 +436,26 @@ export default function Dashboard() {
         <h2 className="text-xl font-semibold text-white mb-4">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 pb-8">
           {quickActions.map((action, index) => {
             const ActionIcon = action.icon;
             return (
+              
               <button
                 key={`quick-action-${index}`}
                 onClick={() => router.push(action.href)}
-                className={`${action.color} text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group`}
+                className={`${action.color} text-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group`}
               >
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between ">
+                  <div className="">
                     <h3 className="text-lg font-semibold mb-2">{action.title}</h3>
                     <p className="text-blue-100 text-sm">{action.description}</p>
                   </div>
                   <ActionIcon className="h-8 w-8 group-hover:scale-110 transition-transform duration-300" />
                 </div>
               </button>
-            );
+             
+              );
           })}
         </div>
       </div>
