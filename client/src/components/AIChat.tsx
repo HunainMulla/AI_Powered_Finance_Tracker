@@ -381,7 +381,7 @@ export default function AIChat({ showChat, setShowChat }: AIChatProps) {
                     ? 'Type yes to confirm or no to cancel...'
                     : 'Ask me anything about your finances...'
                 }
-                className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="text-black flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 disabled={isLoading}
                 aria-label="Type your message"
                 autoFocus
