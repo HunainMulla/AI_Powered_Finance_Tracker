@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const connectDB = require('./config/database');
 require('dotenv').config({ path: './config.env' });
-
+const mongoose = require('mongoose')
 // Import models
 const User = require('./models/User');
 const Transaction = require('./models/Transaction');
@@ -13,6 +13,7 @@ const Budget = require('./models/Budget');
 
 // Import routes
 const aiRoutes = require('./routes/aiRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -100,10 +101,10 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ error: 'User Not Found' });
     }
 
-    const validPassword = await user.comparePassword(password);
+    const validPassword = await user.password === password;
     if (!validPassword) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
@@ -575,6 +576,9 @@ app.get('/api/health', (req, res) => {
 
 // AI Routes
 app.use('/api/ai', aiRoutes);
+
+// User Routes
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
   res.send('Finance Tracker API is running...');

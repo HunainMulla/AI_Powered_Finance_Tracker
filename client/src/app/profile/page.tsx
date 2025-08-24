@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  User, 
-  Mail, 
-  Calendar, 
-  Lock, 
-  Edit, 
-  Save, 
-  X, 
-  Bell, 
-  Shield, 
+import {
+  User,
+  Mail,
+  Calendar,
+  Lock,
+  Edit,
+  Save,
+  X,
+  Bell,
+  Shield,
   CreditCard,
   Settings,
   ArrowLeft
@@ -64,6 +64,14 @@ export default function ProfilePage() {
     phone: ''
   });
   const router = useRouter();
+
+  const handleChangePassword = () => {
+    router.push('/change-password');
+  };
+
+  const handleDeleteAccount = () => {
+    router.push('/delete-account');
+  };
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -145,7 +153,7 @@ export default function ProfilePage() {
       }
 
       const updatedUser = await response.json();
-      
+
       // Update local state with the updated user data
       setUser(prev => ({
         ...prev,
@@ -154,7 +162,7 @@ export default function ProfilePage() {
         email: editData.email,
         phone: editData.phone
       }));
-      
+
       setIsEditing(false);
       toast.success('Profile updated successfully!');
     } catch (error) {
@@ -202,7 +210,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <Navbar />
-      
+
       <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -238,7 +246,7 @@ export default function ProfilePage() {
                 <User className="h-5 w-5 mr-2 text-blue-400" />
                 Basic Information
               </h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
@@ -270,7 +278,7 @@ export default function ProfilePage() {
                       <p className="text-white">{user.name}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Email Address
@@ -286,7 +294,7 @@ export default function ProfilePage() {
                       <p className="text-white">{user.email}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Phone Number
@@ -302,7 +310,7 @@ export default function ProfilePage() {
                       <p className="text-white">{user.phone}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Member Since
@@ -316,9 +324,8 @@ export default function ProfilePage() {
                     <button
                       onClick={handleSave}
                       disabled={isSaving}
-                      className={`bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 ${
-                        isSaving ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-700'
-                      }`}
+                      className={`bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 ${isSaving ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-700'
+                        }`}
                     >
                       {isSaving ? (
                         <>
@@ -344,117 +351,14 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Preferences */}
-            <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-blue-400" />
-                Preferences
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Currency
-                  </label>
-                  <select
-                    value={user.currency}
-                    onChange={(e) => setUser({ ...user, currency: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Timezone
-                  </label>
-                  <select
-                    value={user.timezone}
-                    onChange={(e) => setUser({ ...user, timezone: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-white"
-                  >
-                    <option value="America/New_York">Eastern Time</option>
-                    <option value="America/Chicago">Central Time</option>
-                    <option value="America/Denver">Mountain Time</option>
-                    <option value="America/Los_Angeles">Pacific Time</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+
+
           </div>
 
-          {/* Sidebar */}
+
           <div className="space-y-6">
-            {/* Notifications */}
-            <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                <Bell className="h-5 w-5 mr-2 text-blue-400" />
-                Notifications
-              </h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-white">Email Notifications</p>
-                    <p className="text-sm text-gray-400">Receive updates via email</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotification('email')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-                      user.notifications.email ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                        user.notifications.email ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-white">Push Notifications</p>
-                    <p className="text-sm text-gray-400">Receive updates in browser</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotification('push')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-                      user.notifications.push ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                        user.notifications.push ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-white">SMS Notifications</p>
-                    <p className="text-sm text-gray-400">Receive updates via SMS</p>
-                  </div>
-                  <button
-                    onClick={() => toggleNotification('sms')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-                      user.notifications.sms ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                        user.notifications.sms ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
+
+
 
             {/* Security */}
             <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
@@ -462,9 +366,9 @@ export default function ProfilePage() {
                 <Shield className="h-5 w-5 mr-2 text-blue-400" />
                 Security
               </h2>
-              
+
               <div className="space-y-4">
-                <button className="w-full text-left p-3 rounded-lg border border-gray-600 hover:bg-gray-700 transition-colors duration-200">
+                <button className="w-full text-left p-3 rounded-lg border border-gray-600 hover:bg-gray-700 transition-colors duration-200" onClick={handleChangePassword}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-white">Change Password</p>
@@ -473,16 +377,7 @@ export default function ProfilePage() {
                     <Lock className="h-4 w-4 text-gray-400" />
                   </div>
                 </button>
-                
-                <button className="w-full text-left p-3 rounded-lg border border-gray-600 hover:bg-gray-700 transition-colors duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Two-Factor Authentication</p>
-                      <p className="text-sm text-gray-400">Add extra security</p>
-                    </div>
-                    <Shield className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
+
               </div>
             </div>
 
@@ -492,19 +387,10 @@ export default function ProfilePage() {
                 <CreditCard className="h-5 w-5 mr-2 text-blue-400" />
                 Account
               </h2>
-              
+
               <div className="space-y-4">
-                <button className="w-full text-left p-3 rounded-lg border border-gray-600 hover:bg-gray-700 transition-colors duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Export Data</p>
-                      <p className="text-sm text-gray-400">Download your data</p>
-                    </div>
-                    <CreditCard className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
-                
-                <button className="w-full text-left p-3 rounded-lg border border-red-600 hover:bg-red-900/20 transition-colors duration-200">
+
+                <button className="w-full text-left p-3 rounded-lg border border-red-600 hover:bg-red-900/20 transition-colors duration-200" onClick={handleDeleteAccount}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-red-400">Delete Account</p>
