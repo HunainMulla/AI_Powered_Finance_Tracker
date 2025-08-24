@@ -99,12 +99,14 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-
+    console.log("user found + "+user);
     if (!user) {
       return res.status(400).json({ error: 'User Not Found' });
     }
 
-    const validPassword = await user.password === password;
+
+    const validPassword = await bcrypt.compare(password, user.password);
+
     if (!validPassword) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }

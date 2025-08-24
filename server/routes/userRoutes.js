@@ -13,38 +13,44 @@ const Category = require('../models/Category');
 // @access  Private
 router.post('/change-password', authenticateToken, async (req, res) => {
     console.log(req.user);
-    try{ 
-        const {newPassword,oldPassword} = req.body;
+    try {
+        const { newPassword, oldPassword } = req.body;
         console.log(req.body);
 
         const user = await User.findById(req.user._id);
 
-        if(!user){
-            return res.status(404).json({error:'User not found'});
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
         // if(req.user.password !== oldPassword){
         //     return res.status(400).json({error:'Invalid old password'});
         // }
 
-        await User.updateOne({ _id: req.user._id }, { $set: { password: newPassword } });
+        const salt = await bcrypt.genSalt(10); // generates a salt
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid old password' });
+        }
+        await User.updateOne({ _id: req.user._id }, { $set: { password: hashedPassword } });
 
         const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({message:'Password changed successfully',token});
+        res.json({ message: 'Password changed successfully', token });
     }
-    catch(error){
+    catch (error) {
         console.error('Change password error:', error);
-        res.status(500).json({error:'Server error'});
+        res.status(500).json({ error: 'Server error' });
     }
 
 });
 
-router.get('/all',async(req,res)=>{
-    try{
+router.get('/all', async (req, res) => {
+    try {
         const users = await User.find();
         res.json(users);
     }
-    catch(error){
+    catch (error) {
         console.error('Get users error:', error);
         res.status(500).json({ error: 'Server error' });
     }
@@ -54,27 +60,28 @@ router.get('/all',async(req,res)=>{
 // @desc    Delete user account
 // @access  Private
 router.post('/delete-account', async (req, res) => {
-    console.log(req.user);
-    console.log(req.body);
+    console.log("user found + " + req.user);
+    console.log("body + " + req.body);
     try {
-        const { password,email } = req.body;
-        
+        const { password, email } = req.body;
+        console.log("password + " + password);
+        console.log("email + " + email);
         if (!password) {
             return res.status(400).json({ error: 'Password is required' });
         }
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });
         }
-        
+
         // Get the user with password for verification
         const user = await User.findOne({ email })
-        
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
         // Verify password
-        const isMatch = user.password === password; // Using direct comparison since passwords aren't hashed
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid password' });
         }
