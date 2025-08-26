@@ -2,6 +2,35 @@
 
 A full-stack finance tracking application built with Next.js, Express.js, and MongoDB. Users can register, login, and manage their personal finances including transactions, budgets, categories, and financial goals.
 
+### Dashboard 
+<img width="1895" height="916" alt="image" src="https://github.com/user-attachments/assets/fe7ac4d1-50d2-4975-946c-9228270d587a" />
+
+---
+
+<img width="1886" height="915" alt="image" src="https://github.com/user-attachments/assets/1a159269-9d6c-4253-93a1-65ac24edff16" />
+
+---
+
+### AI Chat-Bot
+
+<img width="1898" height="930" alt="image" src="https://github.com/user-attachments/assets/a0039a6f-6224-450e-b414-ef5f497065c5" />
+
+---
+
+### Creating Categories 
+
+<img width="1904" height="922" alt="image" src="https://github.com/user-attachments/assets/58179e98-b755-4e07-b716-472d463b3b42" />
+
+---
+
+### Adding Transactions 
+
+<img width="1907" height="914" alt="image" src="https://github.com/user-attachments/assets/7d762ea6-8d17-402b-9511-a38788dc0b30" />
+
+---
+
+
+
 ## Features
 
 - **User Authentication**: Register and login with JWT tokens
