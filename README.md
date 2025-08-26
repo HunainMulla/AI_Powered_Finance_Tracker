@@ -1,11 +1,11 @@
-# Finance Tracker - Dynamic Web Application
+# AI-Powered Finance Tracker - Dynamic Web Application
 
 A full-stack finance tracking application built with Next.js, Express.js, and MongoDB. Users can register, login, and manage their personal finances including transactions, budgets, categories, and financial goals.
 
 ### Dashboard 
-<img width="1895" height="916" alt="image" src="https://github.com/user-attachments/assets/fe7ac4d1-50d2-4975-946c-9228270d587a" />
+<img width="1882" height="914" alt="image" src="https://github.com/user-attachments/assets/b84749bf-aeca-4e31-9591-ceb84640c3d6" />
 
----
+- - -
 
 <img width="1886" height="915" alt="image" src="https://github.com/user-attachments/assets/1a159269-9d6c-4253-93a1-65ac24edff16" />
 
@@ -25,7 +25,8 @@ A full-stack finance tracking application built with Next.js, Express.js, and Mo
 
 ### Adding Transactions 
 
-<img width="1907" height="914" alt="image" src="https://github.com/user-attachments/assets/7d762ea6-8d17-402b-9511-a38788dc0b30" />
+<img width="1909" height="916" alt="image" src="https://github.com/user-attachments/assets/b199110e-7883-427b-825c-498f2005c317" />
+
 
 ---
 
